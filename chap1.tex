@@ -1,0 +1,55 @@
+\chapter{Introduction}
+
+Answering many of the deepest questions at the frontiers of modern physics require the use of high energy particle colliders. The largest and highest energy of these colliders currently is the Large Hadron Collider (LHC) at CERN. The LHC structure consists of a 27km long circular accelerator tunnel that collides particles at several detectors along the loop.
+
+Accelerating particles to high speeds is necessary to create impacts at high enough energies to facilitate the interactions of interest to physicists. In such interactions, a variety of resulting particle species can appear as decay modes to a heavier particle. These lighter particles produce a jet. A necessary and important step in particle physics data analysis is the classification of the decaying particle after a high energy collision, also called jet tagging. Successful classification allows for further analysis on production rates and other measurements of Standard Model processes or physics beyond the Standard Model.
+
+In proton-proton collisions, top quarks can be produced which quickly decay before reaching the detector. The most common decay mode for top quarks is a W boson and a bottom quark \cite{10.1093/ptep/ptaa104}. The W boson subsequently decays into either a lepton-antilepton pair or a quark-antiquark pair ($q\bar{q}$), shown in \ref{fig:top_quark_decay}. In the case of a quark-antiquark decay, the quark pair and bottom quark can overlap and be detected as a single jet by the detector. This study focuses on the the problem of Lorentz boosted top tagging, or the classification of these top-quarks from jets produced by other background processes.
+
+\begin{figure}
+    \centering
+    \begin{fmffile}{topQuarkDecay}  % Define the name of the diagram file
+    \begin{fmfgraph*}(200,150)  % Define the size of the diagram
+    
+      % Define the incoming and outgoing particles
+      \fmfleft{i1}  % Top quark coming in
+      \fmfright{o1,o2,o3}  % Bottom quark and two quarks from W decay going out
+    
+      % Define the vertices
+      \fmf{fermion}{i1,v1,o3}  % Top quark to vertex to bottom quark
+      \fmf{boson,label=$W^+$}{v1,v2}  % W boson from top quark decay
+      \fmf{fermion}{v2,o1}  % Decay of W to a quark
+      \fmf{fermion}{o2,v2}  % Decay of W to another quark
+    
+      % Label the particles
+      \fmflabel{$t$}{i1}
+      \fmflabel{$b$}{o3}
+      \fmflabel{$q$}{o1}
+      \fmflabel{$q'$}{o2}
+    \end{fmfgraph*}
+    \end{fmffile}
+    \caption{Feynman diagram of top quark decay into a three quarks}
+    \label{fig:top_quark_decay}
+\end{figure}
+
+Although boosted top tagging is used as a model problem, the methods presented are designed to be applicable to any jet tagging setup where detector simulation data is available. Modern approaches to jet tagging frame the problem as a machine learning classification problem \cite{ATL-PHYS-PUB-2022-039}. This setup uses the physical collider response data as input and predicts either binary or multi-class labels.
+
+\section{The ATLAS Detector}
+
+The ATLAS detector at CERN is a general-purpose particle detector at the LHC. The ATLAS setup consists of a cylindrical structure with concentric layers of detectors and instrumentation centered on the point of collision and parallel to the particle beam axis. During a collision event, individual detectors record the physical properties of produced jets including momentum and kinetic energy absorbed by the detector material. These measured quantities, along with information about the geometry of the detector, are used as features for the classification model.
+
+ATLAS uses a cylindrical coordinate system with the origin centered at the point of particle collision. The $z$-axis is taken to be the beam axis. The azimuthal angle is given by $\phi$ about the $z$-axis and the polar angle is denoted $\theta$. Instead of $\theta$, the pseudorapidity is used in recorded data and is given by $\eta = ln\left[tan\left(\theta / 2\right)\right]$. $\eta$ is used over $\theta$ because differences in $\eta$ are Lorentz invariant under boosts in the z-axis and is thus easier to work with. The coordinate system follows the right hand convention with the $x$-axis pointing towards the center of the LHC circle \cite{Aad:1129811}.
+
+\subsection{Simulation}
+
+Data from collision event simulations are used to train model parameters. In particular, two ATLAS simulation platforms are used to generate training data: the \textsc{Delphes} \cite{de_Favereau_2014} fast simulation framework and the \textsc{Geant4} \cite{AGOSTINELLI2003250,1610988,ALLISON2016186} simulation framework. These two frameworks differ in their quality of output and computational efficiency of data generation. The \textsc{Delphes} platform for ATLAS simulation is publicly released while using \textsc{Geant4} for ATLAS requires proprietary software. These properties make them ideal for our study of transfer learning.
+
+\textsc{Geant4} is a simulation software tool commonly used at the LHC and other experiments. \textsc{Geant4} allows for Monte Carlo simulation of the passage of particles through matter and the associated detector responses. This is done by tracking the progression of individual particles through the entire detector with a high degree of precision. The tool accurately generates sample data, but is computationally expensive to run and takes a non-trivial amount of time to run.
+
+The \textsc{Delphes} fast simulation platform is an alternative computational tool that can be used to generate simulated detector responses to collision events. The \textsc{Delphes} software does not simulate the passage of individual particles as \textsc{Geant4} does, but rather smears particles across detectors. This process is much more inaccurate than the \textsc{Geant4} simulation method, but takes a shorter amount of computational time to run.
+
+\section{Transfer Learning}
+
+The properties of the two simulation datasets provide an ideal data environment for transfer learning. Transfer learning is a machine learning training technique for using model parameters trained for one task as an initialization point for models to be trained on other similar tasks. In practice, a base model is first trained on a base, or pretraining, dataset. The model parameters are saved and used as the starting parameters to train on a target dataset. For a multi layer perceptron neural network, these parameters are the weights $w_i$ and biases $b_i$ learned during training. This target dataset is the actual task used for evaluation.
+
+Transfer learning works best when the features learned by the model are generalizable across datasets. In general, the more similar the base and target tasks are, the easier it will be for the model to adapt to the target dataset \cite{yosinski2014transferable}. The \textsc{Delphes} simulation dataset is used for pretraining and the target data will be \textsc{Geant4} simulation samples. Because data from the two simulations are based on the same physical decay process, it is expected that learned features in pretraining will be useful across both tasks. Specifically, useful features for general particle decays and for the boosted top-quark decay would be shared through transfer learning. Additionally, due to the large computational cost of generating \textsc{Geant4} simulation samples, the transfer learning process for simulated detector data using a base dataset of fast simulation samples is proposed as an alternative to generating large amounts of accurate simulation samples as a measure to reduce both sample generation and model training time while maintaining a similar level of model performance.
